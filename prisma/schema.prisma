@@ -1,0 +1,175 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ==================== Enums ====================
+
+enum Role {
+  PHARMACIST
+  STAFF
+  ADMIN
+}
+
+enum NedlCategory {
+  b
+  s
+  ex
+  R1
+  R2
+}
+
+enum LegalClass {
+  NORMAL
+  DANGEROUS
+  SPECIALLY_CONTROLLED
+}
+
+enum NarcoticClass {
+  PSYCHOTROPIC_2
+  PSYCHOTROPIC_3
+  PSYCHOTROPIC_4
+  NARCOTIC_2
+  NARCOTIC_3
+}
+
+enum InventoryStatus {
+  ACTIVE
+  EXPIRED
+  RECALLED
+  DEPLETED
+}
+
+enum NedlCheckResult {
+  PASS
+  WARNING
+  FAIL
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  DISPENSE
+  LOGIN
+}
+
+// ==================== Models ====================
+
+model User {
+  id            String    @id @default(cuid())
+  username      String    @unique
+  passwordHash  String
+  fullName      String
+  role          Role      @default(STAFF)
+  licenseNumber String?
+  isActive      Boolean   @default(true)
+  lastLogin     DateTime?
+  createdAt     DateTime  @default(now())
+
+  inventoriesReceived Inventory[]        @relation("ReceivedBy")
+  dispensingRecords   DispensingRecord[] @relation("DispensedBy")
+  auditLogs           AuditLog[]         @relation("AuditUser")
+}
+
+model Medicine {
+  id          String  @id @default(cuid())
+  genericName String
+  tradeName   String?
+  strength    String
+  dosageForm  String
+  category    String
+
+  nedlCategory    NedlCategory?
+  nedlGroup       String?
+  nedlSubgroup    String?
+  conditionsOfUse String?       @db.Text
+  remarks         String?       @db.Text
+
+  legalClass    LegalClass    @default(NORMAL)
+  narcoticClass NarcoticClass?
+
+  isActive      Boolean @default(true)
+  removedReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  inventories       Inventory[]
+  dispensingRecords DispensingRecord[]
+}
+
+model Inventory {
+  id         String   @id @default(cuid())
+  medicineId String
+  medicine   Medicine @relation(fields: [medicineId], references: [id])
+
+  batchNumber     String
+  quantity        Float
+  unit            String          @default("เม็ด")
+  manufactureDate DateTime?
+  expiryDate      DateTime
+  location        String?
+  reorderPoint    Float           @default(10)
+  status          InventoryStatus @default(ACTIVE)
+
+  receivedDate DateTime @default(now())
+  receivedById String
+  receivedBy   User     @relation("ReceivedBy", fields: [receivedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  dispensingRecords DispensingRecord[]
+
+  @@unique([medicineId, batchNumber])
+}
+
+model DispensingRecord {
+  id          String    @id @default(cuid())
+  medicineId  String
+  medicine    Medicine  @relation(fields: [medicineId], references: [id])
+  inventoryId String
+  inventory   Inventory @relation(fields: [inventoryId], references: [id])
+
+  patientName String
+  patientHn   String?
+
+  prescriberName String
+  prescriptionNo String?
+  quantity       Float
+  unit           String
+
+  nedlCheckResult NedlCheckResult
+  nedlCheckDetail String?         @db.Text
+  specialCondition String?        @db.Text
+  diagnosis       String?
+  projectApproval String?
+  specialistPrescriber          String?
+  treatmentGuidelineFollowed    Boolean?
+
+  narcoticReportRequired Boolean @default(false)
+  narcoticFormNumber     String?
+
+  dispensedById String
+  dispensedBy   User     @relation("DispensedBy", fields: [dispensedById], references: [id])
+  dispensedAt   DateTime @default(now())
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  userId      String
+  user        User        @relation("AuditUser", fields: [userId], references: [id])
+  action      AuditAction
+  targetTable String
+  targetId    String?
+  oldValues   Json?
+  newValues   Json?
+  description String?     @db.Text
+  ipAddress   String?
+  createdAt   DateTime    @default(now())
+}
