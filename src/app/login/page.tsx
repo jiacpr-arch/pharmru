@@ -2,11 +2,9 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import toast, { Toaster } from "react-hot-toast";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ username: "", password: "" });
 
@@ -23,8 +21,7 @@ export default function LoginPage() {
     if (result?.error) {
       toast.error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     } else {
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     }
   }
 
