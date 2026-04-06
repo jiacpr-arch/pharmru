@@ -1,4 +1,4 @@
-import { PrismaClient, LegalClass, NarcoticClass } from "../src/generated/prisma";
+import { PrismaClient, LegalClass, NarcoticClass } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
