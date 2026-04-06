@@ -3,10 +3,11 @@
   "configurations": [
     {
       "name": "pharmacy-system",
-      "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeExecutable": "/usr/local/bin/node",
+      "runtimeArgs": ["node_modules/.bin/next", "dev"],
       "port": 3001,
-      "autoPort": true
+      "autoPort": true,
+      "cwd": "/Users/apple/Desktop/pharmacy-system"
     }
   ]
 }
