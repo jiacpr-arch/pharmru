@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState, useEffect, useCallback } from "react";
 import NedlBadge from "@/components/NedlBadge";
 import MedicineModal from "./MedicineModal";

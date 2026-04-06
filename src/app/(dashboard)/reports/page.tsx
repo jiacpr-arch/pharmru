@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = 'force-dynamic';
+
 import { useState } from "react";
 
 type ReportType = "stock" | "expiry" | "nedl" | "narcotic";

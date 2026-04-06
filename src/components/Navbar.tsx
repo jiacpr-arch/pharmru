@@ -23,12 +23,7 @@ const navItems = [
   { href: "/reports", label: "รายงาน", icon: "📊" },
 ];
 
-interface NavbarProps {
-  userName?: string;
-  userRole?: string;
-}
-
-export default function Navbar({ userName, userRole }: NavbarProps) {
+export default function Navbar() {
   const pathname = usePathname();
 
   return (
@@ -97,10 +92,10 @@ export default function Navbar({ userName, userRole }: NavbarProps) {
         }}
       >
         <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginBottom: "4px" }}>
-          {userName ?? "ผู้ใช้งาน"}
+          ผู้ใช้งาน
         </div>
         <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "10px" }}>
-          {userRole ?? "STAFF"}
+          PHARMACIST
         </div>
         <button
           onClick={logout}
