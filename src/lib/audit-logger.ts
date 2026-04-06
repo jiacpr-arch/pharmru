@@ -6,8 +6,8 @@ interface AuditParams {
   action: AuditAction;
   targetTable: string;
   targetId?: string;
-  oldValues?: Record<string, unknown>;
-  newValues?: Record<string, unknown>;
+  oldValues?: Record<string, unknown> | null;
+  newValues?: Record<string, unknown> | null;
   description?: string;
   ipAddress?: string;
 }
@@ -20,8 +20,8 @@ export async function logAudit(params: AuditParams) {
         action: params.action,
         targetTable: params.targetTable,
         targetId: params.targetId,
-        oldValues: params.oldValues,
-        newValues: params.newValues,
+        oldValues: params.oldValues ? JSON.parse(JSON.stringify(params.oldValues)) : undefined,
+        newValues: params.newValues ? JSON.parse(JSON.stringify(params.newValues)) : undefined,
         description: params.description,
         ipAddress: params.ipAddress,
       },
