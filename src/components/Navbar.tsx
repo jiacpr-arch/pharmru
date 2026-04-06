@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 
 const navItems = [
   { href: "/", label: "หน้าหลัก", icon: "🏠" },
@@ -13,9 +13,13 @@ const navItems = [
   { href: "/reports", label: "รายงาน", icon: "📊" },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+  userName?: string;
+  userRole?: string;
+}
+
+export default function Navbar({ userName, userRole }: NavbarProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
 
   return (
     <aside
@@ -83,10 +87,10 @@ export default function Navbar() {
         }}
       >
         <div style={{ fontSize: "12px", color: "var(--text-secondary)", marginBottom: "4px" }}>
-          {session?.user?.name ?? "ผู้ใช้งาน"}
+          {userName ?? "ผู้ใช้งาน"}
         </div>
         <div style={{ fontSize: "11px", color: "var(--text-muted)", marginBottom: "10px" }}>
-          {(session?.user as { role?: string })?.role ?? "STAFF"}
+          {userRole ?? "STAFF"}
         </div>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
