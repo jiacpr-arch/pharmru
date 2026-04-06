@@ -1,27 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
-import toast, { Toaster } from "react-hot-toast";
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const [form, setForm] = useState({ username: "", password: "" });
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const result = await signIn("credentials", {
-      username: form.username,
-      password: form.password,
-      redirect: false,
-    });
-    setLoading(false);
+    setError("");
 
-    if (result?.error) {
-      toast.error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
-    } else {
-      window.location.href = "/";
+    try {
+      // Get CSRF token
+      const csrfRes = await fetch("/api/auth/csrf");
+      const { csrfToken } = await csrfRes.json();
+
+      // Sign in
+      const res = await fetch("/api/auth/callback/credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          username: form.username,
+          password: form.password,
+          csrfToken,
+          json: "true",
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data?.url && !data.url.includes("error")) {
+        window.location.href = "/";
+      } else {
+        setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
+      }
+    } catch {
+      setError("เกิดข้อผิดพลาด กรุณาลองใหม่");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -35,7 +53,6 @@ export default function LoginPage() {
         justifyContent: "center",
       }}
     >
-      <Toaster position="top-center" />
       <div
         style={{
           background: "var(--bg-card)",
@@ -57,6 +74,19 @@ export default function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          {error && (
+            <div style={{
+              padding: "10px 12px",
+              background: "#2e0d0d",
+              border: "1px solid var(--accent-red)",
+              borderRadius: "8px",
+              color: "var(--accent-red)",
+              fontSize: "13px",
+            }}>
+              {error}
+            </div>
+          )}
+
           <div>
             <label style={{ display: "block", fontSize: "13px", color: "var(--text-secondary)", marginBottom: "6px" }}>
               ชื่อผู้ใช้
@@ -76,6 +106,7 @@ export default function LoginPage() {
                 color: "var(--text-primary)",
                 fontSize: "14px",
                 outline: "none",
+                boxSizing: "border-box",
               }}
               placeholder="admin"
             />
@@ -99,6 +130,7 @@ export default function LoginPage() {
                 color: "var(--text-primary)",
                 fontSize: "14px",
                 outline: "none",
+                boxSizing: "border-box",
               }}
               placeholder="••••••••"
             />

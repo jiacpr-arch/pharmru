@@ -2,7 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+
+async function logout() {
+  const csrfRes = await fetch("/api/auth/csrf");
+  const { csrfToken } = await csrfRes.json();
+  await fetch("/api/auth/signout", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ csrfToken, json: "true" }),
+  });
+  window.location.href = "/login";
+}
 
 const navItems = [
   { href: "/", label: "หน้าหลัก", icon: "🏠" },
@@ -93,7 +103,7 @@ export default function Navbar({ userName, userRole }: NavbarProps) {
           {userRole ?? "STAFF"}
         </div>
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={logout}
           style={{
             width: "100%",
             padding: "7px",
