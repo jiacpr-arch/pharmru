@@ -1,4 +1,4 @@
-import { NedlCategory } from "@/generated/prisma";
+import { NedlCategory } from "@/generated/prisma/client";
 
 const colors: Record<NedlCategory, { bg: string; text: string; label: string }> = {
   b:  { bg: "#0d2818", text: "#3fb950", label: "บัญชี ข" },

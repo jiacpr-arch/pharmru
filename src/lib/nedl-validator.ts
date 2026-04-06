@@ -1,4 +1,4 @@
-import { NedlCategory, NarcoticClass, Role } from "@/generated/prisma";
+import { NedlCategory, NarcoticClass, Role } from "@/generated/prisma/client";
 
 export type NedlCheckResult = "PASS" | "WARNING" | "FAIL";
 

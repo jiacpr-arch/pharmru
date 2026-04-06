@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { AuditAction } from "@/generated/prisma";
+import { AuditAction } from "@/generated/prisma/client";
 
 interface AuditParams {
   userId: string;
