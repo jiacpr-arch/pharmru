@@ -4,16 +4,17 @@ export const dynamic = 'force-dynamic';
 
 import { useState } from "react";
 
-type ReportType = "stock" | "expiry" | "nedl" | "narcotic";
+type ReportType = "stock" | "expiry" | "nedl" | "narcotic" | "price";
 
 export default function ReportsPage() {
-  const [activeReport, setActiveReport] = useState<ReportType>("stock");
+  const [activeReport, setActiveReport] = useState<ReportType>("price");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [expiryFilter, setExpiryFilter] = useState("90");
   const [nedlCategory, setNedlCategory] = useState("");
 
   const reports = [
+    { id: "price" as ReportType, label: "💰 สรุปยอดจ่ายยา", desc: "รวมยอดเงินตามช่วงเวลา แยกตามตัวยา" },
     { id: "stock" as ReportType, label: "📦 สต็อกยาคงเหลือ", desc: "รายการยาทั้งหมดพร้อมจำนวนคงเหลือ" },
     { id: "expiry" as ReportType, label: "📅 ยาหมดอายุ/ใกล้หมดอายุ", desc: "กรองตามช่วงเวลาที่เหลือ" },
     { id: "nedl" as ReportType, label: "📋 การจ่ายยาบัญชี ex/R1/R2", desc: "สำหรับส่ง อย. หรือตรวจสอบ" },
@@ -59,6 +60,32 @@ export default function ReportsPage() {
 
         {/* Report Config */}
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "10px", padding: "24px" }}>
+          {activeReport === "price" && (
+            <div>
+              <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px" }}>💰 รายงานสรุปยอดจ่ายยา</h2>
+              <p style={{ fontSize: "13px", color: "var(--text-secondary)", marginBottom: "20px" }}>
+                สรุปยอดเงินรวมจากบันทึกการจ่ายยาในช่วงเวลาที่กำหนด จัดกลุ่มตามตัวยา
+                (เรียงตามยอดเงินสูงสุด) — ใช้ราคาที่บันทึกไว้ตอนจ่ายยา (snapshot)
+              </p>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "20px" }}>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", color: "var(--text-secondary)", marginBottom: "4px" }}>วันที่เริ่ม</label>
+                  <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "6px", color: "var(--text-primary)", fontSize: "13px" }} />
+                </div>
+                <div>
+                  <label style={{ display: "block", fontSize: "12px", color: "var(--text-secondary)", marginBottom: "4px" }}>วันที่สิ้นสุด</label>
+                  <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}
+                    style={{ width: "100%", padding: "8px 10px", background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "6px", color: "var(--text-primary)", fontSize: "13px" }} />
+                </div>
+              </div>
+              <div style={{ padding: "10px 12px", background: "var(--bg-secondary)", border: "1px solid var(--border)", borderRadius: "8px", fontSize: "12px", color: "var(--text-secondary)", marginBottom: "12px" }}>
+                💡 ไม่กรอกช่วงเวลา = แสดงทั้งหมด · ยาที่ไม่มีราคาจะนับจำนวนแต่ไม่รวมยอดเงิน
+              </div>
+              <ExportButtons onPrint={() => handlePrint("price")} />
+            </div>
+          )}
+
           {activeReport === "stock" && (
             <div>
               <h2 style={{ fontSize: "16px", fontWeight: 700, marginBottom: "16px" }}>📦 รายงานสต็อกยาคงเหลือ</h2>

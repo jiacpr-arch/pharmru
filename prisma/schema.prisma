@@ -158,6 +158,10 @@ model DispensingRecord {
   narcoticReportRequired Boolean @default(false)
   narcoticFormNumber     String?
 
+  // Price snapshot ณ เวลาจ่าย (ราคายาอาจเปลี่ยนภายหลัง เก็บ snapshot ไว้)
+  unitPrice  Float?
+  totalPrice Float?
+
   dispensedById String
   dispensedBy   User     @relation("DispensedBy", fields: [dispensedById], references: [id])
   dispensedAt   DateTime @default(now())
