@@ -21,9 +21,20 @@ interface Medicine {
   remarks: string | null;
   legalClass: string;
   narcoticClass: string | null;
+  price: number | null;
+  priceUnit: string | null;
   isActive: boolean;
   removedReason: string | null;
   _count: { inventories: number };
+}
+
+function formatPrice(price: number | null, unit: string | null): string {
+  if (price == null) return "—";
+  const formatted = new Intl.NumberFormat("th-TH", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(price);
+  return unit ? `฿${formatted} / ${unit}` : `฿${formatted}`;
 }
 
 const legalClassLabel: Record<string, string> = {
@@ -173,7 +184,7 @@ export default function MedicinesPage() {
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border)" }}>
-              {["ชื่อยา (Generic)", "ความแรง", "รูปแบบ", "บัญชียา", "หมวด", "กฎหมาย", "สต็อก", "สถานะ", ""].map((h) => (
+              {["ชื่อยา (Generic)", "ความแรง", "รูปแบบ", "บัญชียา", "หมวด", "กฎหมาย", "ราคา", "สต็อก", "สถานะ", ""].map((h) => (
                 <th
                   key={h}
                   style={{
@@ -193,13 +204,13 @@ export default function MedicinesPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+                <td colSpan={10} style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
                   กำลังโหลด...
                 </td>
               </tr>
             ) : medicines.length === 0 ? (
               <tr>
-                <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+                <td colSpan={10} style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
                   ไม่พบข้อมูลยา
                 </td>
               </tr>
@@ -233,6 +244,17 @@ export default function MedicinesPage() {
                   <td style={{ padding: "10px 14px", fontSize: "12px", color: "var(--text-muted)" }}>{med.category}</td>
                   <td style={{ padding: "10px 14px", fontSize: "12px", color: legalClassColor[med.legalClass] }}>
                     {legalClassLabel[med.legalClass]}
+                  </td>
+                  <td
+                    style={{
+                      padding: "10px 14px",
+                      fontSize: "13px",
+                      color: med.price != null ? "var(--text-primary)" : "var(--text-muted)",
+                      fontVariantNumeric: "tabular-nums",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {formatPrice(med.price, med.priceUnit)}
                   </td>
                   <td style={{ padding: "10px 14px", fontSize: "13px", color: "var(--text-secondary)" }}>
                     {med._count.inventories} lot
