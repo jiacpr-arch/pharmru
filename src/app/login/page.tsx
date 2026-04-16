@@ -49,8 +49,12 @@ export default function LoginPage() {
         minHeight: "100vh",
         background: "var(--bg-primary)",
         display: "flex",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
+        gap: "24px",
+        padding: "24px",
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -156,6 +160,13 @@ export default function LoginPage() {
           </button>
         </form>
       </div>
+
+      {/* Embedded content feed (shared across morroo/pharmru/roodee/emr) */}
+      <iframe
+        src="https://goody-bay.vercel.app/?site=pharmru"
+        style={{ width: "100%", maxWidth: 380, height: 200, border: 0, display: "block" }}
+        loading="lazy"
+      />
     </div>
   );
 }
