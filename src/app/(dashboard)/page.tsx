@@ -162,6 +162,15 @@ export default function DashboardPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Embedded content feed (shared across morroo/pharmru/roodee/emr) */}
+      <div style={{ marginTop: "24px" }}>
+        <iframe
+          src="https://goody-bay.vercel.app/?site=pharmru"
+          style={{ width: "100%", height: 200, border: 0, display: "block" }}
+          loading="lazy"
+        />
+      </div>
     </div>
   );
 }
