@@ -17,6 +17,8 @@ interface Medicine {
   remarks: string | null;
   legalClass: string;
   narcoticClass: string | null;
+  price: number | null;
+  priceUnit: string | null;
 }
 
 interface Props {
@@ -38,6 +40,8 @@ const defaultForm = {
   remarks: "",
   legalClass: "NORMAL",
   narcoticClass: "",
+  price: "",
+  priceUnit: "เม็ด",
 };
 
 export default function MedicineModal({ medicine, onClose, onSaved }: Props) {
@@ -54,6 +58,8 @@ export default function MedicineModal({ medicine, onClose, onSaved }: Props) {
     remarks: medicine?.remarks ?? defaultForm.remarks,
     legalClass: medicine?.legalClass ?? defaultForm.legalClass,
     narcoticClass: medicine?.narcoticClass ?? defaultForm.narcoticClass,
+    price: medicine?.price != null ? String(medicine.price) : defaultForm.price,
+    priceUnit: medicine?.priceUnit ?? defaultForm.priceUnit,
   });
   const [saving, setSaving] = useState(false);
 
@@ -63,6 +69,11 @@ export default function MedicineModal({ medicine, onClose, onSaved }: Props) {
     e.preventDefault();
     if (requiresConditions && !form.conditionsOfUse.trim()) {
       toast.error("บัญชียานี้ต้องระบุเงื่อนไขการใช้ยา");
+      return;
+    }
+    const priceNum = form.price.trim() === "" ? null : Number(form.price);
+    if (priceNum != null && (!Number.isFinite(priceNum) || priceNum < 0)) {
+      toast.error("ราคายาไม่ถูกต้อง");
       return;
     }
     setSaving(true);
@@ -75,6 +86,8 @@ export default function MedicineModal({ medicine, onClose, onSaved }: Props) {
       nedlSubgroup: form.nedlSubgroup || null,
       conditionsOfUse: form.conditionsOfUse || null,
       remarks: form.remarks || null,
+      price: priceNum,
+      priceUnit: form.priceUnit || null,
     };
 
     const url = medicine ? `/api/medicines/${medicine.id}` : "/api/medicines";
@@ -246,6 +259,34 @@ export default function MedicineModal({ medicine, onClose, onSaved }: Props) {
               ⚠️ ยาวัตถุออกฤทธิ์/ยาเสพติด — การจ่ายยาต้องบันทึกรายงาน อย. ทุกครั้ง
             </div>
           )}
+
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "12px" }}>
+            <div>
+              <label style={labelStyle}>ราคาต่อหน่วย (บาท)</label>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                style={inputStyle}
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                placeholder="เช่น 2.50"
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>หน่วยราคา</label>
+              <select style={inputStyle} value={form.priceUnit}
+                onChange={(e) => setForm({ ...form, priceUnit: e.target.value })}>
+                <option value="เม็ด">เม็ด</option>
+                <option value="แคปซูล">แคปซูล</option>
+                <option value="ขวด">ขวด</option>
+                <option value="ซอง">ซอง</option>
+                <option value="หลอด">หลอด</option>
+                <option value="amp">amp (ยาฉีด)</option>
+                <option value="อื่นๆ">อื่นๆ</option>
+              </select>
+            </div>
+          </div>
 
           <div>
             <label style={labelStyle}>หมายเหตุ</label>

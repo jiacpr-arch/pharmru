@@ -18,9 +18,24 @@ interface DispensingRecord {
   prescriberName: string;
   nedlCheckResult: string;
   dispensedAt: string;
-  medicine: { genericName: string; strength: string; nedlCategory: string | null; narcoticClass: string | null };
+  unitPrice: number | null;
+  totalPrice: number | null;
+  medicine: {
+    genericName: string;
+    strength: string;
+    nedlCategory: string | null;
+    narcoticClass: string | null;
+    price: number | null;
+    priceUnit: string | null;
+  };
   inventory: { batchNumber: string };
   dispensedBy: { fullName: string };
+}
+
+const BAHT_FMT = new Intl.NumberFormat("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function baht(n: number | null | undefined): string {
+  if (n == null) return "—";
+  return `฿${BAHT_FMT.format(n)}`;
 }
 
 const nedlResultStyle: Record<string, { color: string; bg: string; label: string }> = {
@@ -31,6 +46,7 @@ const nedlResultStyle: Record<string, { color: string; bg: string; label: string
 
 export default function DispensingPage() {
   const [records, setRecords] = useState<DispensingRecord[]>([]);
+  const [totalAmount, setTotalAmount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterResult, setFilterResult] = useState("");
@@ -43,7 +59,14 @@ export default function DispensingPage() {
     if (filterResult) params.set("nedlResult", filterResult);
     const res = await fetch(`/api/dispensing?${params}`);
     const data = await res.json();
-    setRecords(Array.isArray(data) ? data : []);
+    // API คืน { records, totalAmount } (backwards compat: รองรับ array ด้วย)
+    if (Array.isArray(data)) {
+      setRecords(data);
+      setTotalAmount(data.reduce((s, r) => s + (r.totalPrice ?? 0), 0));
+    } else {
+      setRecords(data.records ?? []);
+      setTotalAmount(data.totalAmount ?? 0);
+    }
     setLoading(false);
   }, [search, filterResult]);
 
@@ -87,22 +110,50 @@ export default function DispensingPage() {
         </select>
       </div>
 
+      {/* Summary */}
+      {!loading && records.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px 16px",
+            marginBottom: "12px",
+            background: "var(--bg-card)",
+            border: "1px solid var(--border)",
+            borderRadius: "10px",
+          }}
+        >
+          <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+            ยอดรวมการจ่ายยา ({records.length} รายการ)
+            {records.some((r) => r.totalPrice == null) && (
+              <span style={{ marginLeft: "8px", color: "var(--accent-yellow)" }}>
+                · {records.filter((r) => r.totalPrice == null).length} รายการไม่มีราคา
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: "18px", fontWeight: 700, color: "var(--accent-green)", fontVariantNumeric: "tabular-nums" }}>
+            {baht(totalAmount)}
+          </div>
+        </div>
+      )}
+
       {/* Table */}
       <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "10px", overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr style={{ borderBottom: "1px solid var(--border)" }}>
-              {["วันเวลา", "ชื่อยา", "บัญชียา", "ผู้ป่วย", "จำนวน", "แพทย์สั่ง", "ผลตรวจ NEDL", "ผู้จ่าย"].map((h) => (
+              {["วันเวลา", "ชื่อยา", "บัญชียา", "ผู้ป่วย", "จำนวน", "ยอด", "แพทย์สั่ง", "ผลตรวจ NEDL", "ผู้จ่าย"].map((h) => (
                 <th key={h} style={{ padding: "10px 14px", textAlign: "left", fontSize: "12px", color: "var(--text-muted)", fontWeight: 500 }}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>กำลังโหลด...</td></tr>
+              <tr><td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>กำลังโหลด...</td></tr>
             ) : records.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
+                <td colSpan={9} style={{ padding: "40px", textAlign: "center", color: "var(--text-muted)" }}>
                   ยังไม่มีบันทึกการจ่ายยา
                   <div style={{ marginTop: "12px" }}>
                     <button onClick={() => setShowNew(true)}
@@ -132,6 +183,23 @@ export default function DispensingPage() {
                       {rec.patientHn && <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>HN: {rec.patientHn}</div>}
                     </td>
                     <td style={{ padding: "10px 14px", fontSize: "13px" }}>{rec.quantity} {rec.unit}</td>
+                    <td
+                      style={{
+                        padding: "10px 14px",
+                        fontSize: "13px",
+                        fontVariantNumeric: "tabular-nums",
+                        textAlign: "right",
+                        whiteSpace: "nowrap",
+                        color: rec.totalPrice != null ? "var(--text-primary)" : "var(--text-muted)",
+                      }}
+                    >
+                      {baht(rec.totalPrice)}
+                      {rec.unitPrice != null && (
+                        <div style={{ fontSize: "10px", color: "var(--text-muted)" }}>
+                          @{baht(rec.unitPrice)}
+                        </div>
+                      )}
+                    </td>
                     <td style={{ padding: "10px 14px", fontSize: "12px", color: "var(--text-secondary)" }}>{rec.prescriberName}</td>
                     <td style={{ padding: "10px 14px" }}>
                       <span style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "4px", background: style.bg, color: style.color, border: `1px solid ${style.color}33` }}>

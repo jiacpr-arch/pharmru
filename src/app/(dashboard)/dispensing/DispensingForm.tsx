@@ -16,6 +16,14 @@ interface Medicine {
   legalClass: string;
   narcoticClass: string | null;
   isActive: boolean;
+  price: number | null;
+  priceUnit: string | null;
+}
+
+const BAHT = new Intl.NumberFormat("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function formatBaht(n: number | null | undefined): string {
+  if (n == null) return "—";
+  return `฿${BAHT.format(n)}`;
 }
 
 interface InventoryLot {
@@ -140,6 +148,14 @@ export default function DispensingForm({ onClose, onSaved }: Props) {
   const needsNedl = selectedMed && ["ex", "R1", "R2"].includes(selectedMed.nedlCategory ?? "");
   const needsNarcotic = !!selectedMed?.narcoticClass;
 
+  // คำนวณยอดรวม: ราคา × จำนวน (snapshot ปัจจุบันจากข้อมูลยา)
+  const parsedQty = parseFloat(form.quantity);
+  const unitPrice = selectedMed?.price ?? null;
+  const totalPrice =
+    unitPrice != null && Number.isFinite(parsedQty) && parsedQty > 0
+      ? Number((unitPrice * parsedQty).toFixed(2))
+      : null;
+
   return (
     <div
       style={{ position: "fixed", inset: 0, background: "#00000088", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 50 }}
@@ -206,6 +222,11 @@ export default function DispensingForm({ onClose, onSaved }: Props) {
                     <div style={{ fontWeight: 600, fontSize: "15px" }}>{selectedMed.genericName}</div>
                     <div style={{ color: "var(--text-muted)", fontSize: "12px", marginTop: "2px" }}>
                       {selectedMed.strength} · {selectedMed.dosageForm}
+                    </div>
+                    <div style={{ fontSize: "12px", marginTop: "6px", color: selectedMed.price != null ? "var(--accent-green)" : "var(--text-muted)" }}>
+                      💰 ราคา: {selectedMed.price != null
+                        ? `${formatBaht(selectedMed.price)} / ${selectedMed.priceUnit ?? "หน่วย"}`
+                        : "ยังไม่ได้กำหนดราคา"}
                     </div>
                   </div>
                   <NedlBadge category={selectedMed.nedlCategory as "b" | "s" | "ex" | "R1" | "R2" | null} />
@@ -311,6 +332,28 @@ export default function DispensingForm({ onClose, onSaved }: Props) {
                 {selectedLot && (
                   <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "3px" }}>
                     คงเหลือ: {selectedLot.quantity.toLocaleString()} {selectedLot.unit}
+                  </div>
+                )}
+                {unitPrice != null && (
+                  <div
+                    style={{
+                      fontSize: "12px",
+                      marginTop: "6px",
+                      padding: "6px 10px",
+                      background: "var(--bg-card)",
+                      borderRadius: "5px",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      fontVariantNumeric: "tabular-nums",
+                    }}
+                  >
+                    <span style={{ color: "var(--text-muted)" }}>
+                      {formatBaht(unitPrice)} × {parsedQty > 0 ? parsedQty.toLocaleString() : "…"}
+                    </span>
+                    <span style={{ color: "var(--accent-green)", fontWeight: 700 }}>
+                      ยอดรวม: {totalPrice != null ? formatBaht(totalPrice) : "—"}
+                    </span>
                   </div>
                 )}
               </div>
@@ -440,6 +483,28 @@ export default function DispensingForm({ onClose, onSaved }: Props) {
                   <div style={{ marginTop: "2px", color: validation?.result === "PASS" ? "var(--accent-green)" : "var(--accent-yellow)" }}>
                     {validation?.result === "PASS" ? "✅ ผ่าน" : "⚠️ แจ้งเตือน"}
                   </div>
+                </div>
+              </div>
+
+              {/* ยอดเงิน */}
+              <div
+                style={{
+                  marginTop: "14px",
+                  paddingTop: "12px",
+                  borderTop: "1px dashed var(--border)",
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                  ราคา {unitPrice != null ? formatBaht(unitPrice) : "—"}
+                  {selectedMed.priceUnit ? ` / ${selectedMed.priceUnit}` : ""}
+                  {parsedQty > 0 ? ` × ${parsedQty.toLocaleString()}` : ""}
+                </div>
+                <div style={{ fontSize: "18px", fontWeight: 700, color: "var(--accent-green)" }}>
+                  {totalPrice != null ? formatBaht(totalPrice) : "—"}
                 </div>
               </div>
             </div>

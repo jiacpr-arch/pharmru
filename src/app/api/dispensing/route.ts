@@ -52,7 +52,7 @@ export async function GET(req: NextRequest) {
       }),
     },
     include: {
-      medicine: { select: { genericName: true, strength: true, nedlCategory: true, narcoticClass: true } },
+      medicine: { select: { genericName: true, strength: true, nedlCategory: true, narcoticClass: true, price: true, priceUnit: true } },
       inventory: { select: { batchNumber: true } },
       dispensedBy: { select: { fullName: true } },
     },
@@ -60,7 +60,10 @@ export async function GET(req: NextRequest) {
     take: 100,
   });
 
-  return NextResponse.json(records);
+  // คำนวณยอดรวมของผลลัพธ์ที่ส่งกลับ
+  const totalAmount = records.reduce((sum, r) => sum + (r.totalPrice ?? 0), 0);
+
+  return NextResponse.json({ records, totalAmount });
 }
 
 export async function POST(req: NextRequest) {
@@ -114,6 +117,10 @@ export async function POST(req: NextRequest) {
     }, { status: 422 });
   }
 
+  // Snapshot ราคา ณ เวลาจ่าย
+  const unitPrice = medicine.price ?? null;
+  const totalPrice = unitPrice != null ? Number((unitPrice * parsed.data.quantity).toFixed(2)) : null;
+
   // ตัดสต็อก + บันทึก transaction
   const [dispRecord] = await db.$transaction([
     db.dispensingRecord.create({
@@ -135,6 +142,8 @@ export async function POST(req: NextRequest) {
         treatmentGuidelineFollowed: parsed.data.treatmentGuidelineFollowed,
         narcoticReportRequired: !!medicine.narcoticClass,
         narcoticFormNumber: parsed.data.narcoticFormNumber,
+        unitPrice,
+        totalPrice,
         dispensedById: userId,
       },
     }),

@@ -93,6 +93,9 @@ model Medicine {
   legalClass    LegalClass    @default(NORMAL)
   narcoticClass NarcoticClass?
 
+  price    Float?  // ราคาต่อหน่วย (บาท) — เม็ด/แคปซูล/ขวด
+  priceUnit String? // หน่วยราคา เช่น "เม็ด", "ขวด"
+
   isActive      Boolean @default(true)
   removedReason String?
 
@@ -154,6 +157,10 @@ model DispensingRecord {
 
   narcoticReportRequired Boolean @default(false)
   narcoticFormNumber     String?
+
+  // Price snapshot ณ เวลาจ่าย (ราคายาอาจเปลี่ยนภายหลัง เก็บ snapshot ไว้)
+  unitPrice  Float?
+  totalPrice Float?
 
   dispensedById String
   dispensedBy   User     @relation("DispensedBy", fields: [dispensedById], references: [id])

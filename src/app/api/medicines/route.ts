@@ -18,6 +18,8 @@ const medicineSchema = z.object({
   remarks: z.string().optional(),
   legalClass: z.enum(["NORMAL", "DANGEROUS", "SPECIALLY_CONTROLLED"]).default("NORMAL"),
   narcoticClass: z.enum(["PSYCHOTROPIC_2", "PSYCHOTROPIC_3", "PSYCHOTROPIC_4", "NARCOTIC_2", "NARCOTIC_3"]).nullable().optional(),
+  price: z.number().nonnegative().nullable().optional(),
+  priceUnit: z.string().nullable().optional(),
 });
 
 export async function GET(req: NextRequest) {
