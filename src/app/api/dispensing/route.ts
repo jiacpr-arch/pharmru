@@ -115,36 +115,65 @@ export async function POST(req: NextRequest) {
   }
 
   // ตัดสต็อก + บันทึก transaction
-  const [dispRecord] = await db.$transaction([
-    db.dispensingRecord.create({
-      data: {
-        medicineId: parsed.data.medicineId,
-        inventoryId: parsed.data.inventoryId,
-        patientName: parsed.data.patientName,
-        patientHn: parsed.data.patientHn,
-        prescriberName: parsed.data.prescriberName,
-        prescriptionNo: parsed.data.prescriptionNo,
-        quantity: parsed.data.quantity,
-        unit: parsed.data.unit,
-        nedlCheckResult: validation.result,
-        nedlCheckDetail: validation.detail || null,
-        specialCondition: parsed.data.specialCondition,
-        diagnosis: parsed.data.diagnosis,
-        projectApproval: parsed.data.projectApproval,
-        specialistPrescriber: parsed.data.specialistPrescriber,
-        treatmentGuidelineFollowed: parsed.data.treatmentGuidelineFollowed,
-        narcoticReportRequired: !!medicine.narcoticClass,
-        narcoticFormNumber: parsed.data.narcoticFormNumber,
-        dispensedById: userId,
-      },
-    }),
-    db.inventory.update({
-      where: { id: parsed.data.inventoryId },
-      data: {
-        quantity: { decrement: parsed.data.quantity },
-      },
-    }),
-  ]);
+  // ตัดแบบมีเงื่อนไขใน transaction เดียว กันจ่ายพร้อมกันแล้วสต็อกติดลบ
+  let dispRecord;
+  try {
+    dispRecord = await db.$transaction(async (tx) => {
+      const deducted = await tx.inventory.updateMany({
+        where: {
+          id: parsed.data.inventoryId,
+          status: "ACTIVE",
+          quantity: { gte: parsed.data.quantity },
+        },
+        data: { quantity: { decrement: parsed.data.quantity } },
+      });
+      if (deducted.count === 0) {
+        throw new Error("INSUFFICIENT_STOCK");
+      }
+
+      const remaining = await tx.inventory.findUnique({
+        where: { id: parsed.data.inventoryId },
+        select: { quantity: true },
+      });
+      if (remaining && remaining.quantity <= 0) {
+        await tx.inventory.update({
+          where: { id: parsed.data.inventoryId },
+          data: { status: "DEPLETED" },
+        });
+      }
+
+      return tx.dispensingRecord.create({
+        data: {
+          medicineId: parsed.data.medicineId,
+          inventoryId: parsed.data.inventoryId,
+          patientName: parsed.data.patientName,
+          patientHn: parsed.data.patientHn,
+          prescriberName: parsed.data.prescriberName,
+          prescriptionNo: parsed.data.prescriptionNo,
+          quantity: parsed.data.quantity,
+          unit: parsed.data.unit,
+          nedlCheckResult: validation.result,
+          nedlCheckDetail: validation.detail || null,
+          specialCondition: parsed.data.specialCondition,
+          diagnosis: parsed.data.diagnosis,
+          projectApproval: parsed.data.projectApproval,
+          specialistPrescriber: parsed.data.specialistPrescriber,
+          treatmentGuidelineFollowed: parsed.data.treatmentGuidelineFollowed,
+          narcoticReportRequired: !!medicine.narcoticClass,
+          narcoticFormNumber: parsed.data.narcoticFormNumber,
+          dispensedById: userId,
+        },
+      });
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === "INSUFFICIENT_STOCK") {
+      return NextResponse.json(
+        { error: "สต็อกไม่เพียงพอหรือถูกจ่ายไปพร้อมกัน กรุณาลองใหม่" },
+        { status: 409 }
+      );
+    }
+    throw error;
+  }
 
   await logAudit({
     userId,
