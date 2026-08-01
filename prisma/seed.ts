@@ -154,11 +154,21 @@ const medicines: MedicineSeed[] = [
   { genericName: "Mefenamic Acid", strength: "500mg", dosageForm: "capsule", category: "ยาแก้ปวด", batchNumber: "MFA-T22" },
 ];
 
+// รหัสผ่านตั้งผ่าน env ได้ — ถ้าไม่ตั้ง จะใช้ค่า default สำหรับ dev เท่านั้น
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "admin123";
+const PHARM_PASSWORD = process.env.SEED_PHARMACIST_PASSWORD ?? "pharm123";
+
 async function main() {
   console.log("🌱 เริ่ม seed ข้อมูล...");
 
+  if (!process.env.SEED_ADMIN_PASSWORD || !process.env.SEED_PHARMACIST_PASSWORD) {
+    console.warn(
+      "⚠️  ใช้รหัสผ่าน default (dev เท่านั้น) — production ต้องตั้ง SEED_ADMIN_PASSWORD / SEED_PHARMACIST_PASSWORD"
+    );
+  }
+
   // สร้าง Admin user
-  const adminPassword = await bcrypt.hash("admin123", 12);
+  const adminPassword = await bcrypt.hash(ADMIN_PASSWORD, 12);
   const admin = await prisma.user.upsert({
     where: { username: "admin" },
     update: {},
@@ -173,7 +183,7 @@ async function main() {
   console.log("✅ สร้าง admin user:", admin.username);
 
   // สร้าง Pharmacist user
-  const pharmPassword = await bcrypt.hash("pharm123", 12);
+  const pharmPassword = await bcrypt.hash(PHARM_PASSWORD, 12);
   await prisma.user.upsert({
     where: { username: "pharmacist" },
     update: {},
@@ -226,8 +236,8 @@ async function main() {
   console.log(`✅ นำเข้ายา ${created} รายการสำเร็จ`);
   console.log("");
   console.log("📋 สรุป:");
-  console.log("   - Admin:      username=admin      password=admin123");
-  console.log("   - Pharmacist: username=pharmacist password=pharm123");
+  console.log("   - Admin:      username=admin");
+  console.log("   - Pharmacist: username=pharmacist");
   console.log(`   - ยาทั้งหมด:  ${created} รายการ`);
 }
 

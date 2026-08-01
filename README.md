@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ระบบห้องยา (Pharmacy Management System)
 
-## Getting Started
+ระบบจัดการห้องยาสำหรับสถานพยาบาล — จัดการข้อมูลยา master, คลังยา (FEFO), จ่ายยาพร้อมตรวจสอบตามบัญชียาหลักแห่งชาติ (NEDL), และ audit trail
 
-First, run the development server:
+## Tech Stack
+
+- Next.js 16 (App Router) + React 19
+- Prisma 7 + PostgreSQL
+- NextAuth (credentials, JWT session)
+
+## เริ่มต้นใช้งาน
+
+ดูขั้นตอนติดตั้งแบบละเอียดใน [SETUP.md](./SETUP.md)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run db:migrate   # migrate database
+npm run db:seed      # seed ยา 124 รายการ + user เริ่มต้น
+npm run dev          # เปิด http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ตัวแปร env ที่ต้องตั้งใน `.env`:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:5432/pharmacy_system"
+NEXTAUTH_SECRET="random-secret"
+# production ต้องตั้งรหัสผ่าน seed เอง อย่าใช้ default
+SEED_ADMIN_PASSWORD="..."
+SEED_PHARMACIST_PASSWORD="..."
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## หน้าในระบบ
 
-## Learn More
+| Path | หน้าที่ |
+|---|---|
+| `/` | Dashboard |
+| `/medicines` | ข้อมูลยา master (แก้ไขได้เฉพาะ ADMIN/PHARMACIST) |
+| `/inventory` | คลังยา + รับยาเข้า |
+| `/dispensing` | จ่ายยา + ตรวจ NEDL compliance |
+| `/audit` | Audit trail (ADMIN/PHARMACIST) |
+| `/reports` | รายงาน |
 
-To learn more about Next.js, take a look at the following resources:
+## NEDL Compliance Logic
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- บัญชี ข (b) — จ่ายได้เลย
+- บัญชี ง (s) — แนะนำระบุเหตุผล
+- บัญชีเพิ่มเติม (ex) — BLOCK ถ้าไม่มี diagnosis
+- บัญชี ร1 (R1) — BLOCK ถ้าไม่มี project approval
+- บัญชี ร2 (R2) — BLOCK ถ้าไม่มี specialist + guideline
+- ยาควบคุม — BLOCK ถ้าผู้จ่ายไม่ใช่ PHARMACIST หรือไม่มีเลขแบบฟอร์ม อย.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| คำสั่ง | หน้าที่ |
+|---|---|
+| `npm run dev` | dev server |
+| `npm run build` | production build |
+| `npm run typecheck` | ตรวจ TypeScript (รันใน CI ทุก PR) |
+| `npm run db:migrate` | prisma migrate dev |
+| `npm run db:seed` | seed ข้อมูล |
+| `npm run db:studio` | Prisma Studio |

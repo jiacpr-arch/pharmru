@@ -25,9 +25,11 @@ npm run db:migrate
 npm run db:seed
 ```
 จะสร้าง:
-- admin (password: admin123)
-- pharmacist (password: pharm123)
+- admin (รหัสผ่านจาก `SEED_ADMIN_PASSWORD` — ถ้าไม่ตั้ง จะใช้ `admin123` สำหรับ dev เท่านั้น)
+- pharmacist (รหัสผ่านจาก `SEED_PHARMACIST_PASSWORD` — default `pharm123` สำหรับ dev เท่านั้น)
 - ยา 124 รายการพร้อม inventory
+
+> ⚠️ **Production ต้องตั้ง `SEED_ADMIN_PASSWORD` / `SEED_PHARMACIST_PASSWORD` ใน env เสมอ** อย่าปล่อยรหัสผ่าน default ขึ้นระบบจริง
 
 ## 4. Start Development Server
 ```bash

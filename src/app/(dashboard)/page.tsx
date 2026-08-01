@@ -167,6 +167,9 @@ export default function DashboardPage() {
       <div style={{ marginTop: "24px" }}>
         <iframe
           src="https://goody-bay.vercel.app/?site=pharmru"
+          title="Shared content feed"
+          sandbox="allow-scripts allow-same-origin"
+          referrerPolicy="no-referrer"
           style={{ width: "100%", height: 200, border: 0, display: "block" }}
           loading="lazy"
         />

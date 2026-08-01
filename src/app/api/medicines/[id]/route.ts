@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { logAudit, getIpFromRequest } from "@/lib/audit-logger";
+import { hasRole } from "@/lib/authz";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -19,6 +20,10 @@ const updateSchema = z.object({
   legalClass: z.enum(["NORMAL", "DANGEROUS", "SPECIALLY_CONTROLLED"]).optional(),
   narcoticClass: z.enum(["PSYCHOTROPIC_2", "PSYCHOTROPIC_3", "PSYCHOTROPIC_4", "NARCOTIC_2", "NARCOTIC_3"]).nullable().optional(),
   removedReason: z.string().nullable().optional(),
+});
+
+const deactivateSchema = z.object({
+  removedReason: z.string().min(1),
 });
 
 export async function GET(
@@ -49,6 +54,9 @@ export async function PUT(
 ) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasRole(session, "ADMIN", "PHARMACIST")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { id } = await params;
   const body = await req.json();
@@ -78,9 +86,16 @@ export async function PATCH(
 ) {
   const session = await getServerSession(authOptions);
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!hasRole(session, "ADMIN", "PHARMACIST")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const { id } = await params;
-  const { removedReason } = await req.json();
+  const parsedBody = deactivateSchema.safeParse(await req.json());
+  if (!parsedBody.success) {
+    return NextResponse.json({ error: parsedBody.error.flatten() }, { status: 400 });
+  }
+  const { removedReason } = parsedBody.data;
 
   const old = await db.medicine.findUnique({ where: { id } });
   const medicine = await db.medicine.update({
