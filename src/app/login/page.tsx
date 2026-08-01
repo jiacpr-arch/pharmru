@@ -161,9 +161,13 @@ export default function LoginPage() {
         </form>
       </div>
 
-      {/* Embedded content feed (shared across morroo/pharmru/roodee/emr) */}
+      {/* Embedded content feed (shared across morroo/pharmru/roodee/emr) —
+          sandbox จำกัดสิทธิ์ content ภายนอกเพราะอยู่หน้าเดียวกับฟอร์มรหัสผ่าน */}
       <iframe
         src="https://goody-bay.vercel.app/?site=pharmru"
+        title="Shared content feed"
+        sandbox="allow-scripts allow-same-origin"
+        referrerPolicy="no-referrer"
         style={{ width: "100%", maxWidth: 380, height: 200, border: 0, display: "block" }}
         loading="lazy"
       />
