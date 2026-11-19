@@ -15,6 +15,9 @@ export default function RootLayout({
   return (
     <html lang="th" className="h-full">
       <head>
+        <link rel="stylesheet" href="/jia-consent.css" />
+        <script src="/jia-consent-config.js"></script>
+        <script src="/jia-consent.js"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
